@@ -8,20 +8,39 @@ DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 @trigger(events=["s3"])
 @conda_base(
     libraries={
-        "pandas": "1.4.2",
-        "pyarrow": "11.0.0",
-        "numpy": "1.21.2",
-        "scikit-learn": "1.1.2",
+        "pandas": "2.1.2",  # bump version
+        "pyarrow": "13.0.0", # bump version
+        #"numpy": "1.21.2",  # omit defining numpy since pandas comes with it
+        "scikit-learn": "1.3.2", # bump version
     }
 )
 class TaxiFarePrediction(FlowSpec):
     data_url = Parameter("data_url", default=URL)
 
     def transform_features(self, df):
+        import pandas as pd
         # TODO:
         # Try to complete tasks 2 and 3 with this function doing nothing like it currently is.
         # Understand what is happening.
         # Revisit task 1 and think about what might go in this function.
+        obviously_bad_data_filters = [
+            df.fare_amount > 0,  # fare_amount in US Dollars
+            df.trip_distance <= 100,  # trip_distance in miles
+            df.tip_amount >= 0,
+            df.mta_tax >= 0,
+            df.tolls_amount >= 0,
+            df.improvement_surcharge >= 0,
+            df.total_amount >= 0,
+            df.congestion_surcharge >= 0,
+            df.airport_fee >= 0,
+            df.trip_distance > 0,
+            pd.notna(df.trip_distance),
+            df.passenger_count > 0,
+            pd.notna(df.passenger_count)
+        ]
+        for f in obviously_bad_data_filters:
+            df = df[f]
+        df = df.reset_index(drop=True)
 
         return df
 
